@@ -3,6 +3,8 @@ package example.org.proyectobase;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -19,7 +21,11 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.InstallCallbackInterface;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+
 import android.hardware.Camera;
 
 public class MainActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, LoaderCallbackInterface {
@@ -32,6 +38,11 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     private int cam_anchura =320;// resolucion deseada de la imagen
     private int cam_altura=240;
     private static final String STATE_CAMERA_INDEX = "cameraIndex";
+
+
+    private int tipoEntrada = 0; // 0 -> cámara 1 -> fichero1 2 -> fichero2
+    Mat imagenRecurso_;
+    boolean recargarRecurso = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,8 +94,25 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     }
 
 
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        return inputFrame.rgba();
+    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {Mat entrada;
+        if (tipoEntrada == 0) {
+            entrada = inputFrame.rgba();
+        } else {
+            if(recargarRecurso == true) {
+                imagenRecurso_ = new Mat();
+        //Poner aqui el nombre de los archivos copiados
+                int RECURSOS_FICHEROS[] = {0, R.raw.img1, R.raw.img2};
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
+                        RECURSOS_FICHEROS[tipoEntrada]);
+//Convierte el recurso a una Mat de OpenCV
+                Utils.bitmapToMat(bitmap, imagenRecurso_);
+                Imgproc.resize(imagenRecurso_, imagenRecurso_, new Size(cam_anchura, cam_altura));
+                recargarRecurso = false;
+            }
+            entrada = imagenRecurso_;
+        }
+        Mat salida = entrada.clone();
+        return salida;
     }
     //Interface LoaderCallbackInterface
     public void onManagerConnected(int status) {
@@ -127,30 +155,40 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-        case R.id.cambiarCamara:
-            if (indiceCamara == CameraBridgeViewBase.CAMERA_ID_BACK) {
-                indiceCamara = CameraBridgeViewBase.CAMERA_ID_FRONT;
-            }
-            else
-                indiceCamara = CameraBridgeViewBase.CAMERA_ID_BACK;
-            recreate();
-            break;
-        case R.id.resolucion_800x600:
-            cam_anchura = 800;
-            cam_altura = 600;
-            reiniciarResolucion();
-            break;
-        case R.id.resolucion_640x480:
-            cam_anchura = 640;
-            cam_altura = 480;
-            reiniciarResolucion();
-            break;
-        case R.id.resolucion_320x240:
-            cam_anchura = 320;
-            cam_altura = 240;
-            reiniciarResolucion();
-            break;
-    }
+            case R.id.cambiarCamara:
+                if (indiceCamara == CameraBridgeViewBase.CAMERA_ID_BACK) {
+                    indiceCamara = CameraBridgeViewBase.CAMERA_ID_FRONT;
+                } else
+                    indiceCamara = CameraBridgeViewBase.CAMERA_ID_BACK;
+                recreate();
+                break;
+            case R.id.resolucion_800x600:
+                cam_anchura = 800;
+                cam_altura = 600;
+                reiniciarResolucion();
+                break;
+            case R.id.resolucion_640x480:
+                cam_anchura = 640;
+                cam_altura = 480;
+                reiniciarResolucion();
+                break;
+            case R.id.resolucion_320x240:
+                cam_anchura = 320;
+                cam_altura = 240;
+                reiniciarResolucion();
+                break;
+            case R.id.entrada_camara:
+                tipoEntrada = 0;
+                break;
+            case R.id.entrada_fichero1:
+                tipoEntrada = 1;
+                recargarRecurso = true;
+                break;
+            case R.id.entrada_fichero2:
+                tipoEntrada = 2;
+                recargarRecurso = true;
+                break;
+        }
         String msg= "W="+Integer.toString(cam_anchura)+ " H= " +
                 Integer.toString(cam_altura) + " Cam= " +
                 Integer.toBinaryString(indiceCamara);
