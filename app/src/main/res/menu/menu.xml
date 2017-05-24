@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item
+        android:id="@+id/cambiarCamara"
+        android:icon="@android:drawable/ic_menu_camera"
+        android:title="Cambiar cámara"/>
+    <item
+        android:id="@+id/cambiarResolucion"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="Cambiar resolucion">
+        <menu>
+            <item
+                android:id="@+id/resolucion_800x600"
+                android:title="800x600"/>
+            <item
+                android:id="@+id/resolucion_640x480"
+                android:title="640x480"/>
+            <item
+                android:id="@+id/resolucion_320x240"
+                android:title="320x240"/>
+        </menu>
+    </item>
+</menu>
