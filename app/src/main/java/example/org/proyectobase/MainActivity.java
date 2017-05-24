@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -24,9 +25,12 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import android.hardware.Camera;
+
+import java.io.File;
 
 public class MainActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, LoaderCallbackInterface {
     private static final String TAG = "Ej.OCV-MainActivity";
@@ -43,6 +47,8 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     private int tipoEntrada = 0; // 0 -> cámara 1 -> fichero1 2 -> fichero2
     Mat imagenRecurso_;
     boolean recargarRecurso = false;
+
+    private boolean guardarSiguienteImagen = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +118,14 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
             entrada = imagenRecurso_;
         }
         Mat salida = entrada.clone();
+        if (guardarSiguienteImagen) {//Para foto salida debe ser rgba
+            takePhoto(entrada, salida);
+            guardarSiguienteImagen = false;
+        }
+        if(tipoEntrada > 0) {
+//Es necesario que el tamaño de la salida coincida con el real de captura
+            Imgproc.resize(salida, salida, new Size(cam_anchura , cam_altura));
+        }
         return salida;
     }
     //Interface LoaderCallbackInterface
@@ -188,6 +202,9 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
                 tipoEntrada = 2;
                 recargarRecurso = true;
                 break;
+            case R.id.guardar_imagenes:
+                guardarSiguienteImagen = true;
+                break;
         }
         String msg= "W="+Integer.toString(cam_anchura)+ " H= " +
                 Integer.toString(cam_altura) + " Cam= " +
@@ -200,5 +217,41 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
         cameraView.disableView();
         cameraView.setMaxFrameSize(cam_anchura, cam_altura);
         cameraView.enableView();
+    }
+
+    private void takePhoto(final Mat input, final Mat output) {
+// Determina la ruta para crear los archivos
+        final long currentTimeMillis = System.currentTimeMillis();
+        final String appName = getString(R.string.app_name);
+        final String galleryPath = Environment
+                .getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES).toString();
+        final String albumPath = galleryPath + "/" + appName;
+        final String photoPathIn = albumPath + "/In_" + currentTimeMillis
+                + ".png";
+        final String photoPathOut = albumPath + "/Out_" + currentTimeMillis
+                + ".png";
+// Asegurarse que el directorio existe
+        File album = new File(albumPath);
+        if (!album.isDirectory() && !album.mkdirs()) {
+            Log.e(TAG, "Error al crear el directorio " + albumPath);
+            return;
+        }
+// Intenta crear los archivos
+        Mat mBgr = new Mat();
+        if (output.channels() == 1) Imgproc.cvtColor(output, mBgr, Imgproc.COLOR_GRAY2BGR, 3);
+        else
+            Imgproc.cvtColor(output, mBgr, Imgproc.COLOR_RGBA2BGR, 3);
+        if (!Imgcodecs.imwrite(photoPathOut, mBgr)) {
+            Log.e(TAG, "Fallo al guardar " + photoPathOut);
+        }
+        if (input.channels() == 1)
+            Imgproc.cvtColor(input, mBgr, Imgproc.COLOR_GRAY2BGR, 3);
+        else
+            Imgproc.cvtColor(input, mBgr, Imgproc.COLOR_RGBA2BGR, 3);
+        if (!Imgcodecs.imwrite(photoPathIn, mBgr))
+            Log.e(TAG, "Fallo al guardar " + photoPathIn);
+        mBgr.release();
+        return;
     }
 }
