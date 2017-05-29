@@ -52,6 +52,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     private boolean guardarSiguienteImagen = false;
 
     Procesador procesador;
+    ProcesadorRojas procesadorRGBA;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,13 +99,14 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
         cam_altura = height; //Estas son las que se usan de verdad
         cam_anchura = width;
         procesador = new Procesador();
+        procesadorRGBA = new ProcesadorRojas();
     }
 
     public void onCameraViewStopped() {
     }
 
 
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+    public Mat onCameraFrameMono(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
         Mat entrada;
         if (tipoEntrada == 0) {
@@ -113,7 +115,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
         } else {
             if(recargarRecurso == true) {
                 imagenRecurso_ = new Mat();
-        //Poner aqui el nombre de los archivos copiados
+                //Poner aqui el nombre de los archivos copiados
                 int RECURSOS_FICHEROS[] = {0, R.raw.img1, R.raw.img2};
                 Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
                         RECURSOS_FICHEROS[tipoEntrada]);
@@ -149,6 +151,58 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
         }
         return salida;
     }
+
+
+    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+
+        Mat entrada;
+        if (tipoEntrada == 0) {
+            entrada = inputFrame.rgba(); //rgba
+            //entrada = inputFrame.gray(); //grises
+        } else {
+            if(recargarRecurso == true) {
+                imagenRecurso_ = new Mat();
+                //Poner aqui el nombre de los archivos copiados
+                int RECURSOS_FICHEROS[] = {0, R.raw.img1, R.raw.img2};
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
+                        RECURSOS_FICHEROS[tipoEntrada]);
+//Convierte el recurso a una Mat de OpenCV
+                Utils.bitmapToMat(bitmap, imagenRecurso_);
+                Imgproc.resize(imagenRecurso_, imagenRecurso_, new Size(cam_anchura, cam_altura));
+                recargarRecurso = false;
+            }
+            entrada = imagenRecurso_;
+        }
+
+        //Mat salida = entrada.clone();
+
+        Mat salida = procesadorRGBA.procesa(entrada);
+        //procesador.mitadMitad(entrada, salida);
+
+        /* Detectar orientación:
+
+        Mat esquina = entrada.submat(0,10,0,10); //Arriba-izquierda
+
+        esquina.setTo(new Scalar(255,255,255));
+        Mat salida = entrada;
+
+        */
+
+        if (guardarSiguienteImagen) {//Para foto salida debe ser rgba
+            takePhoto(entrada, salida);
+            guardarSiguienteImagen = false;
+        }
+        if(tipoEntrada > 0) {
+//Es necesario que el tamaño de la salida coincida con el real de captura
+            Imgproc.resize(salida, salida, new Size(cam_anchura , cam_altura));
+        }
+
+        if(salida.channels() == 1)
+            Imgproc.cvtColor(salida, salida, Imgproc.COLOR_GRAY2RGBA);
+        return salida;
+    }
+
+
     //Interface LoaderCallbackInterface
     public void onManagerConnected(int status) {
         switch (status) {
