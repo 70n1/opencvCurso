@@ -24,6 +24,7 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -49,6 +50,8 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     boolean recargarRecurso = false;
 
     private boolean guardarSiguienteImagen = false;
+
+    Procesador procesador;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +97,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     public void onCameraViewStarted(int width, int height) {
         cam_altura = height; //Estas son las que se usan de verdad
         cam_anchura = width;
+        procesador = new Procesador();
     }
 
     public void onCameraViewStopped() {
@@ -117,7 +121,20 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
             }
             entrada = imagenRecurso_;
         }
-        Mat salida = entrada.clone();
+
+        //Mat salida = entrada.clone();
+
+        Mat salida = procesador.procesa(entrada);
+
+        /* Detectar orientación:
+
+        Mat esquina = entrada.submat(0,10,0,10); //Arriba-izquierda
+
+        esquina.setTo(new Scalar(255,255,255));
+        Mat salida = entrada;
+
+        */
+
         if (guardarSiguienteImagen) {//Para foto salida debe ser rgba
             takePhoto(entrada, salida);
             guardarSiguienteImagen = false;
