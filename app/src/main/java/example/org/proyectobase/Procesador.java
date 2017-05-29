@@ -31,7 +31,7 @@ public class Procesador {
         imagenes = new ArrayList<Mat>() ;
         histograma = new float[256];
     }
-    public Mat procesa(Mat entrada) {
+    public Mat procesa_aumento_lineal(Mat entrada) {
         Mat salida = new Mat();
         imagenes.clear(); //Eliminar imagen anterior si la hay
         imagenes.add(entrada); //Añadir imagen actual
@@ -65,6 +65,12 @@ public class Procesador {
         Core.subtract(entrada, new Scalar(xmin) , salida);
         float pendiente = ((float) 255.0) / ((float) (xmax-xmin));
         Core.multiply(salida, new Scalar(pendiente) , salida);
+        return salida;
+    }
+
+    public Mat procesa(Mat entrada) {
+        Mat salida = new Mat();
+        Imgproc.equalizeHist(entrada, salida);
         return salida;
     }
 
