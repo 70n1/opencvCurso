@@ -1,6 +1,7 @@
 package example.org.proyectobase;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -12,11 +13,21 @@ import org.opencv.imgproc.Imgproc;
 
 public class ProcesadorFiltros {
     Mat paso_bajo;
+    Mat Gx;
+    Mat Gy;
+    Mat ModGrad;
+    Mat AngGrad;
+
+
     public ProcesadorFiltros() {
         paso_bajo= new Mat();
+        Gx= new Mat();
+        Gy= new Mat();
+        ModGrad= new Mat();
+        AngGrad= new Mat();
     }
 
-    public Mat procesa(Mat entrada) {
+    public Mat procesaFiltroAlto(Mat entrada) {
         Mat salida = new Mat();
         int filter_size = 17;
         Size s=new Size(filter_size,filter_size);
@@ -28,4 +39,32 @@ public class ProcesadorFiltros {
         Core.multiply(salida, ganancia, salida);
         return salida;
     }
+
+    public Mat procesa(Mat entrada) {
+
+        Imgproc.Sobel(entrada, Gx, CvType.CV_32FC1, 1, 0); //Derivada primera rto x
+        Imgproc.Sobel(entrada, Gy, CvType.CV_32FC1, 0, 1); //Derivada primera rto y
+
+        // Core.cartToPolar(Gx, Gy, ModGrad, AngGrad);
+        //return ModGrad;
+
+        Core.convertScaleAbs(Gx, ModGrad);
+        Core.convertScaleAbs(Gy, AngGrad);
+        Mat salida = new Mat();
+        Core.addWeighted(ModGrad, 0.5, AngGrad, 0.5, 0, salida);
+        return salida;
+
+
+/*
+        Mat Gx2 = new Mat();
+        Mat Gy2 = new Mat();
+        Core.multiply(Gx, Gx , Gx2); //Gx2 = Gx*Gx elemento a elemento
+        Core.multiply(Gy, Gy , Gy2); //Gy2 = Gy*Gy elemento a elemento
+        Mat ModGrad2 = new Mat();
+        Core.add( Gx2 , Gy2, ModGrad2);
+        Mat ModGrad = new Mat();
+        Core.sqrt(ModGrad2,ModGrad);
+        return ModGrad;*/
+    }
+
 }
