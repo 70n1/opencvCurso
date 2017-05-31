@@ -17,6 +17,7 @@ public class ProcesadorFiltros {
     Mat Gy;
     Mat ModGrad;
     Mat AngGrad;
+    Mat red;
 
 
     public ProcesadorFiltros() {
@@ -25,6 +26,7 @@ public class ProcesadorFiltros {
         Gy= new Mat();
         ModGrad= new Mat();
         AngGrad= new Mat();
+        red = new Mat();
     }
 
     public Mat procesaFiltroAlto(Mat entrada) {
@@ -42,8 +44,10 @@ public class ProcesadorFiltros {
 
     public Mat procesa(Mat entrada) {
 
-        Imgproc.Sobel(entrada, Gx, CvType.CV_32FC1, 1, 0); //Derivada primera rto x
-        Imgproc.Sobel(entrada, Gy, CvType.CV_32FC1, 0, 1); //Derivada primera rto y
+        Core.extractChannel(entrada, red, 0);
+
+        Imgproc.Sobel(red, Gx, CvType.CV_32FC1, 1, 0); //Derivada primera rto x
+        Imgproc.Sobel(red, Gy, CvType.CV_32FC1, 0, 1); //Derivada primera rto y
 
         // Core.cartToPolar(Gx, Gy, ModGrad, AngGrad);
         //return ModGrad;
