@@ -178,10 +178,10 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
 
         //Mat salida = entrada.clone();
 
-       // Mat salida = procesadorRGBA.procesa(entrada);
+        Mat salida = procesadorRGBA.procesa(entrada);
         //Mat salida = procesador.procesa(entrada);
 
-        Mat salida = procesadorFiltros.procesa(entrada);
+        //Mat salida = procesadorFiltros.procesaDilatacion(entrada);
 
         //procesador.mitadMitad(entrada, salida);
 

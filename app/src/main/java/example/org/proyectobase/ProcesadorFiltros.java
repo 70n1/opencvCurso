@@ -71,4 +71,15 @@ public class ProcesadorFiltros {
         return ModGrad;*/
     }
 
+    public Mat procesaDilatacion(Mat entrada) {
+        double tam = 11;
+        Mat SE = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(tam,tam));
+        Mat gray_dilation = new Mat(); // Result
+       // Mat gray_erosion = new Mat(); // Result
+
+        Mat salida = new Mat();
+        Imgproc.dilate(entrada, gray_dilation, SE ); // 3x3 dilation
+        Core.subtract(gray_dilation, entrada, salida);
+        return  salida;
+    }
 }
