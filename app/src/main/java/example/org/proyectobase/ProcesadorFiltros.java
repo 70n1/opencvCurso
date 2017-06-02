@@ -72,14 +72,20 @@ public class ProcesadorFiltros {
     }
 
     public Mat procesaDilatacion(Mat entrada) {
-        double tam = 11;
+        double tam = 3;
         Mat SE = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(tam,tam));
         Mat gray_dilation = new Mat(); // Result
        // Mat gray_erosion = new Mat(); // Result
 
-        Mat salida = new Mat();
+        Mat grad = new Mat();
         Imgproc.dilate(entrada, gray_dilation, SE ); // 3x3 dilation
-        Core.subtract(gray_dilation, entrada, salida);
+        Core.subtract(gray_dilation, entrada, grad);
+
+        Mat salida = new Mat();
+        int contraste = 2;
+        int tamano = 7;
+        Imgproc.adaptiveThreshold(grad, salida,255, Imgproc.ADAPTIVE_THRESH_MEAN_C,
+                Imgproc.THRESH_BINARY, tamano, -contraste );
         return  salida;
     }
 }
