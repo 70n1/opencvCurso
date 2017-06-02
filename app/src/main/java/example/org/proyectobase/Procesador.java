@@ -68,9 +68,16 @@ public class Procesador {
         return salida;
     }
 
-    public Mat procesa(Mat entrada) {
+    public Mat procesaEqualizeHist(Mat entrada) {
         Mat salida = new Mat();
         Imgproc.equalizeHist(entrada, salida);
+        return salida;
+    }
+
+    public Mat procesa(Mat entrada) {
+        Mat salida = new Mat();
+        Imgproc.threshold(entrada, salida, 0, 255,Imgproc.THRESH_OTSU |
+                Imgproc.THRESH_BINARY);
         return salida;
     }
 

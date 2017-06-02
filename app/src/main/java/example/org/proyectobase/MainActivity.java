@@ -108,7 +108,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     }
 
 
-    public Mat onCameraFrameMono(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
         Mat entrada;
         if (tipoEntrada == 0) {
@@ -132,7 +132,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
         //Mat salida = entrada.clone();
 
         Mat salida = procesador.procesa(entrada);
-        procesador.mitadMitad(entrada, salida);
+        //procesador.mitadMitad(entrada, salida);
 
         /* Detectar orientación:
 
@@ -155,7 +155,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     }
 
 
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+    public Mat onCameraFrameRGBA(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
         Mat entrada;
         if (tipoEntrada == 0) {
