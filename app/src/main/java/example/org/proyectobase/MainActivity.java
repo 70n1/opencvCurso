@@ -132,7 +132,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
         //Mat salida = entrada.clone();
 
         //Mat salida = procesador.procesa(entrada);
-        Mat salida = procesadorFiltros.procesaDilatacion(entrada);
+        Mat salida = procesadorFiltros.procesaCirculoAnidadoInterior(entrada);
         //procesador.mitadMitad(entrada, salida);
 
         /* Detectar orientación:

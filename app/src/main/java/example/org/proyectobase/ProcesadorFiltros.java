@@ -131,4 +131,83 @@ public class ProcesadorFiltros {
         } // for
         return salida;
     }
+
+
+    public Mat procesaCirculoAnidadoInterior(Mat entrada) {
+        double tam = 3;
+        Mat SE = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(tam,tam));
+        Mat gray_dilation = new Mat(); // Result
+        // Mat gray_erosion = new Mat(); // Result
+
+        Mat grad = new Mat();
+        Imgproc.dilate(entrada, gray_dilation, SE ); // 3x3 dilation
+        Core.subtract(gray_dilation, entrada, grad);
+
+
+        Mat binaria = new Mat();
+        int contraste = 2;
+        int tamano = 7;
+        Imgproc.adaptiveThreshold(grad, binaria,255, Imgproc.ADAPTIVE_THRESH_MEAN_C,
+                Imgproc.THRESH_BINARY, tamano, -contraste );
+
+
+        List<MatOfPoint> blobs = new ArrayList< MatOfPoint >() ;
+        Mat hierarchy = new Mat();
+        Mat salida = binaria.clone();//Copia porque finContours modifica entrada
+        Imgproc.cvtColor(salida, salida, Imgproc.COLOR_GRAY2RGBA);
+        Imgproc.findContours(binaria, blobs, hierarchy, Imgproc.RETR_CCOMP,
+                Imgproc.CHAIN_APPROX_NONE );
+        int minimumHeight = 30;
+        float maxratio = (float) 0.75;
+
+        ArrayList<Point[]> listaPuntos = new ArrayList<Point[]>();
+// Seleccionar candidatos a circulos
+        for (int c= 0; c< blobs.size(); c++ ) {
+            double[] data = hierarchy.get(0,c);
+            int parent = (int) data[3];
+            if(parent < 0) //Contorno exterior: rechazar
+                continue;
+            Rect BB = Imgproc.boundingRect(blobs.get(c) );
+// Comprobar tamaño
+            if ( BB.width < minimumHeight || BB.height < minimumHeight)
+                continue;
+// Comprobar anchura similar a altura
+            float wf = BB.width;
+            float hf = BB.height;
+            float ratio = wf / hf;
+            if(ratio < maxratio || ratio > 1.0/maxratio)
+                continue;
+// Comprobar no está cerca del borde
+            if(BB.x < 2 || BB.y < 2)
+                continue;
+            if(entrada.width() - (BB.x + BB.width) < 3 || entrada.height() - (BB.y + BB.height) < 3)
+                continue;
+
+            Point[] puntos = new Point[2];
+            puntos[0] = new Point(BB.x, BB.y);
+            puntos[1] = new Point(BB.x+BB.width, BB.y+BB.height);
+
+            listaPuntos.add(puntos);
+            /*
+// Aqui cumple todos los criterios. Dibujamos
+            final Point P1 = new Point(BB.x, BB.y);
+            final Point P2 = new Point(BB.x+BB.width, BB.y+BB.height);
+            Imgproc.rectangle(salida, P1, P2, new Scalar(255,0,0) );
+            */
+
+        } // for
+
+        mostrar_rectangulos_interiores(salida, listaPuntos);
+        return salida;
+    }
+
+    private void mostrar_rectangulos_interiores(Mat salida, ArrayList<Point[]> listaPuntos) {
+        for (Point[] puntos: listaPuntos) {
+            for (Point[] puntos2: listaPuntos) {
+                if (((puntos2[0].x>puntos[0].x) && (puntos2[0].y>puntos[0].y)) && ((puntos2[1].x<puntos[1].x) && (puntos2[1].y<puntos[1].y)) ){
+                    Imgproc.rectangle(salida, puntos2[0], puntos2[1], new Scalar(255,0,0) );
+                };
+            }
+        }
+    }
 }
