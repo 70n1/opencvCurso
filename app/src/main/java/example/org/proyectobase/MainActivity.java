@@ -108,7 +108,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     }
 
 
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+    public Mat onCameraFrameGrey(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
         Mat entrada;
         if (tipoEntrada == 0) {
@@ -156,7 +156,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     }
 
 
-    public Mat onCameraFrameRGBA(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
         Mat entrada;
         if (tipoEntrada == 0) {
