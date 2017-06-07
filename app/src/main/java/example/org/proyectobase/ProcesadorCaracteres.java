@@ -100,7 +100,8 @@ public class ProcesadorCaracteres {
         int contraste = 5;
         int tamano = 7;
         //Imgproc.adaptiveThreshold(red, binaria1, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, tamano, contraste );
-        //Binarizacion Otsu
+
+        //Binarizacion Otsu  //me funciona mejor utilizando la binarización de Otsu
         Imgproc.threshold(red, binaria1, 0, 255, Imgproc.THRESH_BINARY_INV+ Imgproc.THRESH_OTSU);
 
 
