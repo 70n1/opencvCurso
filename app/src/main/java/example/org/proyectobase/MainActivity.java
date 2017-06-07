@@ -51,9 +51,9 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
 
     private boolean guardarSiguienteImagen = false;
 
-    Procesador procesador;
-    ProcesadorRojas procesadorRGBA;
-    ProcesadorFiltros procesadorFiltros;
+    //Procesador procesador;
+    //ProcesadorRojas procesadorRGBA;
+    //ProcesadorFiltros procesadorFiltros;
     ProcesadorCaracteres procesadorCaracteres;
 
     @Override
@@ -100,9 +100,9 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     public void onCameraViewStarted(int width, int height) {
         cam_altura = height; //Estas son las que se usan de verdad
         cam_anchura = width;
-        procesador = new Procesador();
-        procesadorRGBA = new ProcesadorRojas();
-        procesadorFiltros = new ProcesadorFiltros();
+        //procesador = new Procesador();
+        //procesadorRGBA = new ProcesadorRojas();
+        //procesadorFiltros = new ProcesadorFiltros();
         procesadorCaracteres = new ProcesadorCaracteres();
     }
 
@@ -110,7 +110,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     }
 
 
-    public Mat onCameraFrameGrey(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+    /*public Mat onCameraFrameGrey(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
         Mat entrada;
         if (tipoEntrada == 0) {
@@ -134,17 +134,20 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
         //Mat salida = entrada.clone();
 
         //Mat salida = procesador.procesa(entrada);
-        Mat salida = procesadorFiltros.procesaCirculoAnidadoInterior(entrada);
+
+       Mat salida = procesadorFiltros.procesaCirculoAnidadoInterior(entrada);
+
+
         //procesador.mitadMitad(entrada, salida);
 
-        /* Detectar orientación:
+        *//* Detectar orientación:
 
         Mat esquina = entrada.submat(0,10,0,10); //Arriba-izquierda
 
         esquina.setTo(new Scalar(255,255,255));
         Mat salida = entrada;
 
-        */
+        *//*
 
         if (guardarSiguienteImagen) {//Para foto salida debe ser rgba
             takePhoto(entrada, salida);
@@ -155,7 +158,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
             Imgproc.resize(salida, salida, new Size(cam_anchura , cam_altura));
         }
         return salida;
-    }
+    }*/
 
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
