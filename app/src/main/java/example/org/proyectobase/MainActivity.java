@@ -54,6 +54,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
     Procesador procesador;
     ProcesadorRojas procesadorRGBA;
     ProcesadorFiltros procesadorFiltros;
+    ProcesadorCaracteres procesadorCaracteres;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +103,7 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
         procesador = new Procesador();
         procesadorRGBA = new ProcesadorRojas();
         procesadorFiltros = new ProcesadorFiltros();
+        procesadorCaracteres = new ProcesadorCaracteres();
     }
 
     public void onCameraViewStopped() {
@@ -180,7 +182,10 @@ public class MainActivity extends Activity implements CameraBridgeViewBase.CvCam
         //Mat salida = entrada.clone();
 
         //Mat salida = procesadorRGBA.procesa(entrada);
-        Mat salida = procesadorRGBA.procesaNumeros(entrada);
+        //Mat salida = procesadorRGBA.procesaNumeros(entrada);
+        //
+        Mat salida = procesadorCaracteres.procesa(entrada);
+
         //Mat salida = procesador.procesa(entrada);
 
         //Mat salida = procesadorFiltros.procesaDilatacion(entrada);
