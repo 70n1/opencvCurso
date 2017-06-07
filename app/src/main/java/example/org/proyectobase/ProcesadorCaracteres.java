@@ -1,5 +1,6 @@
 package example.org.proyectobase;
 
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -18,22 +19,238 @@ import java.util.List;
 
 public class ProcesadorCaracteres {
     Mat tabla_caracteristicas;
+    Mat binaria;
     Mat binaria1;
     Mat binaria2;
     Mat entrada_gris;
+    Mat recorte_digito;
+
+
+    Mat red;
+    Mat green;
+    Mat blue;
+    Mat maxGB;
+
     int NUMERO_CLASES = 10;
     int MUESTRAS_POR_CLASE = 2;
     int NUMERO_CARACTERISTICAS = 9;
     public ProcesadorCaracteres() { //Constructor
         tabla_caracteristicas = new Mat(NUMERO_CLASES* MUESTRAS_POR_CLASE,
                 NUMERO_CARACTERISTICAS, CvType.CV_64FC1);
+        binaria= new Mat();
         binaria1= new Mat();
         binaria2= new Mat();
         entrada_gris = new Mat();
+
+        red = new Mat();
+        green = new Mat();
+        blue = new Mat();
+        maxGB = new Mat();
+
+        recorte_digito = new Mat();
+
         crearTabla();
     }
 
     public Mat procesa(Mat entrada) {
+//entrada: imagen color
+        Rect rect_circulo = localizarCirCuloRojo(entrada);
+        if(rect_circulo.width <=0)
+            return entrada.clone();
+        Mat circulo = entrada.submat(rect_circulo); //Recorte zona de interes
+        String cadenaDigitos = analizarInteriorDisco(circulo);
+        if((cadenaDigitos.length() <= 1))
+            return entrada.clone();
+
+        if (cadenaDigitos.contains("0") && !(cadenaDigitos.endsWith("0"))){
+            char[] cadenaDigitosChars = cadenaDigitos.toCharArray();
+            cadenaDigitosChars[cadenaDigitos.lastIndexOf("0")] = cadenaDigitos.charAt(cadenaDigitos.length()-1);
+            cadenaDigitosChars[cadenaDigitos.length()-1] = "0".charAt(0);
+            cadenaDigitos = String.valueOf(cadenaDigitosChars);
+        }
+        Mat salida = dibujarResultado(entrada, rect_circulo, cadenaDigitos);
+        return salida;
+    }
+
+    private String analizarInteriorDisco(Mat circulo) {
+
+        //Imgproc.cvtColor( circulo, entrada_gris, Imgproc.COLOR_RGBA2GRAY);
+        Core.extractChannel(circulo, red, 0);
+        List<Rect> digit_rects  = new ArrayList<Rect>();
+        localizarCaracteres(digit_rects);
+
+        String salida = "";
+        //if (digit_rects.size()>1) {
+            for (int n = 0; n < digit_rects.size(); n++) {
+                recorte_digito = red.submat(digit_rects.get(n));
+//Binarizacion Otsu
+                Imgproc.threshold(recorte_digito, binaria2, 0, 255, Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU);
+//Leer numero
+                int digito = leerRectangulo(binaria2);
+                salida = salida.concat(String.valueOf(digito));
+            }
+        //}
+        //Mat salida = dibujarResultado(entrada, rect_digito, digito);
+        return salida;
+
+
+    }
+
+    private boolean localizarCaracteres(List<Rect> digit_rects) {
+        int contraste = 5;
+        int tamano = 7;
+        //Imgproc.adaptiveThreshold(red, binaria1, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, tamano, contraste );
+        //Binarizacion Otsu
+        Imgproc.threshold(red, binaria1, 0, 255, Imgproc.THRESH_BINARY_INV+ Imgproc.THRESH_OTSU);
+
+
+        List<MatOfPoint> contornos = new ArrayList< MatOfPoint >() ;
+        Mat jerarquia = new Mat();
+        Imgproc.findContours(binaria1, contornos, jerarquia, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE );
+        //Imgproc.findContours(binaria1, contornos, jerarquia, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_NONE);
+        //Imgproc.findContours(binaria1, contornos, jerarquia, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE );
+        int altura_minima = 30;
+        int anchura_minima = 10;
+        double max_area=-1;
+// Seleccionar objeto mas grande
+        for (int c= 0; c < contornos.size(); c++ ) {
+            Rect bb = Imgproc.boundingRect( contornos.get(c) );
+// Comprobar tamaño
+            if (bb.width < anchura_minima || bb.height < altura_minima)
+                continue;
+// Descartar proximos al borde
+            if(bb.x < 2 || bb.y < 2)
+                continue;
+            if(binaria1.width() - (bb.x + bb.width) < 3 || binaria1.height() - (bb.y + bb.height) < 3)
+                continue;
+// Seleccionar el mayor
+            //int area = bb.width * bb.height;
+            double area = bb.area();
+            if( area > max_area ) {
+                max_area= area;
+                Rect digit_rect = new Rect();
+                digit_rect.x = bb.x;
+                digit_rect.y = bb.y;
+                digit_rect.width = bb.width;
+                digit_rect.height = bb.height;
+
+                digit_rects.add(digit_rect);
+            }
+        }
+        if( digit_rects.size() > 0) //Se ha detectado objeto valido
+            return true;
+        else
+            return false;
+    }
+
+    private boolean localizarCaracteres_original(List<Rect> digit_rects) {
+        int contraste = 5;
+        int tamano = 7;
+        Imgproc.adaptiveThreshold(red, binaria1, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, tamano, contraste );
+        List<MatOfPoint> contornos = new ArrayList< MatOfPoint >() ;
+        Mat jerarquia = new Mat();
+        Imgproc.findContours(binaria1, contornos, jerarquia, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE );
+        //Imgproc.findContours(binaria1, contornos, jerarquia, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE );
+        int altura_minima = 30;
+        int anchura_minima = 10;
+        double max_area=-1;
+// Seleccionar objeto mas grande
+        for (int c= 0; c < contornos.size(); c++ ) {
+            Rect bb = Imgproc.boundingRect( contornos.get(c) );
+// Comprobar tamaño
+            if (bb.width < anchura_minima || bb.height < altura_minima)
+                continue;
+// Descartar proximos al borde
+            if(bb.x < 2 || bb.y < 2)
+                continue;
+            if(binaria1.width() - (bb.x + bb.width) < 3 || binaria1.height() - (bb.y + bb.height) < 3)
+                continue;
+// Seleccionar el mayor
+            //int area = bb.width * bb.height;
+            double area = bb.area();
+            if( area > max_area ) {
+                max_area= area;
+                Rect digit_rect = new Rect();
+                digit_rect.x = bb.x;
+                digit_rect.y = bb.y;
+                digit_rect.width = bb.width;
+                digit_rect.height = bb.height;
+
+                digit_rects.add(digit_rect);
+            }
+        }
+        if( digit_rects.size() > 0) //Se ha detectado objeto valido
+            return true;
+        else
+            return false;
+    }
+
+
+    public Rect localizarCirCuloRojo(Mat entrada) {
+
+        Rect rectCirculo = new Rect();
+        //Mat binaria = new Mat();
+        Core.extractChannel(entrada, red, 0);
+        Core.extractChannel(entrada, green, 1);
+        Core.extractChannel(entrada, blue, 2);
+        Core.max(green, blue, maxGB);
+        Core.subtract(red, maxGB, binaria1);
+
+        Core.MinMaxLocResult minMax = Core.minMaxLoc(binaria1);
+        int maximum = (int) minMax.maxVal;
+        int thresh = maximum / 4;
+
+        Imgproc.threshold(binaria1, binaria1, thresh, 255, Imgproc.THRESH_BINARY);
+
+
+        List<MatOfPoint> blobs = new ArrayList<MatOfPoint>();
+        Mat hierarchy = new Mat();
+        Mat salida = binaria1.clone();//Copia porque finContours modifica entrada
+        Imgproc.cvtColor(salida, salida, Imgproc.COLOR_GRAY2RGBA);
+        Imgproc.findContours(binaria1, blobs, hierarchy, Imgproc.RETR_CCOMP,
+                Imgproc.CHAIN_APPROX_NONE);
+        int minimumHeight = 30;
+        float maxratio = (float) 0.75;
+
+        ArrayList<Point[]> listaPuntos = new ArrayList<Point[]>();
+// Seleccionar candidatos a circulos
+        for (int c = 0; c < blobs.size(); c++) {
+            double[] data = hierarchy.get(0, c);
+            int parent = (int) data[3];
+            if (parent < 0) //Contorno exterior: rechazar
+                continue;
+            Rect BB = Imgproc.boundingRect(blobs.get(c));
+// Comprobar tamaño
+            if (BB.width < minimumHeight || BB.height < minimumHeight)
+                continue;
+// Comprobar anchura similar a altura
+            float wf = BB.width;
+            float hf = BB.height;
+            float ratio = wf / hf;
+            if (ratio < maxratio || ratio > 1.0 / maxratio)
+                continue;
+// Comprobar no está cerca del borde
+            if (BB.x < 2 || BB.y < 2)
+                continue;
+            if (entrada.width() - (BB.x + BB.width) < 3 || entrada.height() - (BB.y + BB.height) < 3)
+                continue;
+
+
+// Aqui cumple todos los criterios. Dibujamos
+            final Point P1 = new Point(BB.x, BB.y);
+            final Point P2 = new Point(BB.x + BB.width, BB.y + BB.height);
+            //Imgproc.rectangle(entrada, P1, P2, new Scalar(0, 0, 255));
+
+            rectCirculo = new Rect(P1,P2);
+
+            return rectCirculo;
+        }
+        return rectCirculo;
+    }
+
+
+
+    public Mat procesaIndividual(Mat entrada) {
         Imgproc.cvtColor( entrada, entrada_gris, Imgproc.COLOR_RGBA2GRAY);
         Rect rect_digito = new Rect();
         boolean localizado = localizarCaracter(rect_digito);
@@ -45,7 +262,7 @@ public class ProcesadorCaracteres {
         Imgproc.threshold(recorte_digito, binaria2, 0, 255, Imgproc.THRESH_BINARY_INV+ Imgproc.THRESH_OTSU);
 //Leer numero
         int digito = leerRectangulo(binaria2);
-        Mat salida = dibujarResultado(entrada, rect_digito, digito);
+        Mat salida = dibujarResultado(entrada, rect_digito, String.valueOf(digito));
         return salida;
     }
 
@@ -125,7 +342,7 @@ public class ProcesadorCaracteres {
 
 
 
-    Mat dibujarResultado(Mat imagen, Rect digit_rect, int digit) {
+    Mat dibujarResultado(Mat imagen, Rect digit_rect, String digit) {
         Mat salida = imagen.clone();
         Point P1 = new Point(digit_rect.x, digit_rect.y);
         Point P2 = new Point(digit_rect.x+digit_rect.width, digit_rect.y+digit_rect.height);
@@ -134,10 +351,10 @@ public class ProcesadorCaracteres {
         int fontFace = 6;//FONT_HERSHEY_SCRIPT_SIMPLEX;
         double fontScale = 1;
         int thickness = 5;
-        Imgproc.putText(salida, Integer.toString(digit ),
+        Imgproc.putText(salida, digit ,
                 P1, fontFace, fontScale,
                 new Scalar(0,0,0), thickness, 8,false);
-        Imgproc.putText(salida, Integer.toString(digit ),
+        Imgproc.putText(salida, digit ,
                 P1, fontFace, fontScale,
                 new Scalar(255,255,255), thickness/2, 8,false);
         return salida;
